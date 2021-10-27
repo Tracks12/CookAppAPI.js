@@ -1,13 +1,17 @@
+/**
+ * Project : CookAppAPI
+ * Name    : index.js
+ * Date    : 27/10/2021
+ * Autor   : CARDINAL Florian
+ */
+
 // Modules importations
 import express from "express";
-import { MongoClient, ObjectID } from "mongodb";
 import cors from "cors";
-import { readFile, writeFile } from 'fs/promises';
-import { nanoid } from "nanoid";
+import { MongoClient, ObjectID } from "mongodb";
 
 // MongoDB remote connection
-const dbURL = "mongodb+srv://Couisto:flZOVgYziqUW96km@cookappdb.hkjf8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-const dbName = "cook-app-db";
+import { dbURL, dbName, port } from './constants.js';
 let db;
 
 MongoClient.connect(dbURL, (err, client) => {
@@ -15,15 +19,14 @@ MongoClient.connect(dbURL, (err, client) => {
 	db = client.db(dbName);
 });
 
-// App instance
+// App & Receipes instances
 const app = express();
 const receipes = express();
-let data = {};
 
 receipes
 	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
 	.get("/", async (req, res) => {
-		let data = await db.collection("receipes").find({}).toArray();
+		let data = await db.collection("receipes").find().toArray();
 		res.status(200).json(data);
 	})
 	.get("/:id", async (req, res) => {
@@ -50,4 +53,8 @@ app
 	.get("/status", (req, res) => res.json({ success: true }))
 	.use("/receipes", receipes);
 
-app.listen(5000, () => console.log("[i] - Server is listening on 127.0.0.1:5000"));
+app.listen(port, () => console.log(`[i] - Server is listening on 127.0.0.1:${port}`));
+
+/**
+ * END
+ */
