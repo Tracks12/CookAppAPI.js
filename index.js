@@ -1,48 +1,47 @@
 // Modules importations
 import express from "express";
+import { MongoClient, ObjectID } from "mongodb";
 import cors from "cors";
 import { readFile, writeFile } from 'fs/promises';
 import { nanoid } from "nanoid";
 
-// Load data files
-const dataPath = './database/receipes.json';
-const data = JSON.parse(await readFile(new URL(dataPath, import.meta.url)));
+// MongoDB remote connection
+const dbURL = "mongodb+srv://Couisto:flZOVgYziqUW96km@cookappdb.hkjf8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const dbName = "cook-app-db";
+let db;
 
-// Json persistance
-function updateStorage() {
-	writeFile(dataPath, JSON.stringify(data, null, 2), 'utf8');
-}
+MongoClient.connect(dbURL, (err, client) => {
+	console.log("[i] - MongoDB remote successfully connected !");
+	db = client.db(dbName);
+});
 
 // App instance
 const app = express();
 const receipes = express();
+let data = {};
 
 receipes
-	.on("mount", () => {
-		console.log("[i] - Receipes CRUD correctly mounted !")
+	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
+	.get("/", async (req, res) => {
+		let data = await db.collection("receipes").find({}).toArray();
+		res.status(200).json(data);
 	})
-	.get("/", (req, res) => res.json(data))
-	.get("/:id", (req, res) => res.json(data.find((obj) => obj._id === req.params.id)))
-	.post("/", (req, res) => {
-		req.body["_id"] = nanoid();
-		data.push(req.body);
-
-		updateStorage();
-		res.json({ success: true });
+	.get("/:id", async (req, res) => {
+		let data = await db.collection("receipes").findOne({ _id: new ObjectID(req.params.id) });
+		res.status(200).json(data);
 	})
-	.put("/:id", (req, res) => {
-		let index = data.map(x => x._id).indexOf(req.params.id);
-		data[index] = req.body;
-
-		updateStorage();
-		res.json({ success: true });
+	.post("/", async (req, res) => {
+		await db.collection("receipes").insertOne(req.body);
+		res.status(200).json({ success: true });
 	})
-	.delete("/:id", (req, res) => {
-		let index = data.map(x => x._id).indexOf(req.params.id);
-		data.splice(index, 1);
-
-		updateStorage();
-		res.json({ success: true });
+	.put("/:id", async (req, res) => {
+		let {_id, ...body} = req.body;
+		await db.collection("receipes").updateOne({ _id: new ObjectID(req.params.id) }, { $set: body });
+		res.status(200).json({ success: true });
+	})
+	.delete("/:id", async (req, res) => {
+		await db.collection("receipes").deleteOne({ _id: new ObjectID(req.params.id) });
+		res.status(200).json({ success: true });
 	});
 
 app
