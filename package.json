@@ -1,30 +1,33 @@
 {
   "name": "cookappapi",
   "version": "1.0.0",
-  "description": "",
+  "description": "A web application to manage recipes stored in a mongodb",
   "main": "index.js",
   "type": "module",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongodb": "^4.1.3",
+    "nodemon": "^2.0.14",
     "npm": "^8.1.1"
   },
   "devDependencies": {},
   "scripts": {
-    "start": "nodemon"
+    "start": "nodemon ."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Tracks12/CookAppAPI.js.git"
   },
   "keywords": [
-    "Cook;",
-    "App;",
-    "API;",
-    "node;",
-    "nodejs;",
-    "js;"
+    "cook",
+    "app",
+    "api",
+    "rest",
+    "api-rest",
+    "node",
+    "nodejs",
+    "js"
   ],
   "author": "Florian Cardinal",
   "license": "ISC",
