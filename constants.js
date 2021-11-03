@@ -5,7 +5,7 @@
  * Autor   : CARDINAL Florian
  */
 
-// Constants of remove MongoDB DataBase Access
+// Constants of remote MongoDB DataBase Access
 export const dbURL = "...";
 export const dbName = "cook-app-db";
 

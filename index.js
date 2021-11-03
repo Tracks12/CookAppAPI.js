@@ -53,7 +53,7 @@ app
 	.get("/status", (req, res) => res.json({ success: true }))
 	.use("/receipes", receipes);
 
-app.listen(port, () => console.log(`[i] - Server is listening on 127.0.0.1:${port}`));
+app.listen(port, () => console.log(`[i] - Server is listening on localhost:${port}`));
 
 /**
  * END
