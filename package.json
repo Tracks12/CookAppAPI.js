@@ -8,6 +8,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongodb": "^4.1.3",
+    "nodemon": "^2.0.14",
     "npm": "^8.1.1"
   },
   "devDependencies": {},
@@ -22,8 +23,8 @@
     "cook",
     "app",
     "api",
-		"rest",
-		"api-rest",
+    "rest",
+    "api-rest",
     "node",
     "nodejs",
     "js"
