@@ -8,8 +8,9 @@
 // Import Modules
 import express from "express";
 import cors from "cors";
-import jwt from "jsonwebtoken";
 import { MongoClient, ObjectID } from "mongodb";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 // Import Constants & Utils
 import { DB_URL, DB_NAME, EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET } from './common/constants.js';
