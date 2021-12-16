@@ -82,8 +82,8 @@ app
 		if(user)
 			return res.status(409).json({ success: false });
 
-		await bcrypt.hash(req.body.pass, 10, (err, hash) => {
-			let request = db.collection("users").insertOne({ isAdmin: false, pass: hash, user: req.body.user });
+		bcrypt.hash(req.body.pass, 10, async (err, hash) => {
+			let request = await db.collection("users").insertOne({ isAdmin: false, pass: hash, user: req.body.user });
 			res.status(request ? 200 : 500).json({ success: request ? true : false });
 		});
 	});
