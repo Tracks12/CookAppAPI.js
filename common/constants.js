@@ -15,6 +15,7 @@ export const EXPRESS_PORT = 5000;
 
 // Constants of token
 export const TOKEN_SECRET = "...";
+export const TOKEN_DURATION = 30;
 
 /**
  * END

@@ -13,7 +13,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"API is online\", function () {\r",
+							"pm.test(\"API is online\", () => {\r",
 							"\tvar jsonData = pm.response.json();\r",
 							"\tpm.expect(jsonData.success).to.be.true;\r",
 							"});\r",
@@ -45,7 +45,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Account register success\", function () {\r",
+							"pm.test(\"Account register success\", () => {\r",
 							"\tvar jsonData = pm.response.json();\r",
 							"\tpm.expect(jsonData.success).to.be.true;\r",
 							"});\r",
@@ -60,7 +60,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"pass\": \"admin\",\r\n\t\"user\": \"admin\"\r\n}",
+					"raw": "{\r\n\t\"user\": \"{{AUTH_USER}}\",\r\n\t\"email\": \"{{AUTH_MAIL}}\",\r\n\t\"pass\": \"{{AUTH_PASS}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -145,7 +145,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Login success\", function () {\r",
+							"pm.test(\"Login success\", () => {\r",
 							"\tvar jsonData = pm.response.json();\r",
 							"\tpm.expect(jsonData.success).to.be.true;\r",
 							"});\r",
@@ -162,7 +162,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"user\": \"admin\",\r\n\t\"pass\": \"admin\"\r\n}",
+					"raw": "{\r\n\t\"user\": \"{{AUTH_USER}}\",\r\n\t\"pass\": \"{{AUTH_PASS}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -247,7 +247,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Expect data array on output\", function () {\r",
+							"pm.test(\"Expect data array on output\", () => {\r",
 							"\tvar jsonData = pm.response.json();\r",
 							"\tpm.expect(jsonData).to.be.an(\"array\");\r",
 							"});\r",
@@ -285,6 +285,10 @@
 					"listen": "test",
 					"script": {
 						"exec": [
+							"pm.test(\"Expect data object on output\", () => {\r",
+							"\tvar jsonData = pm.response.json();\r",
+							"\tpm.expect(jsonData).to.be.an(\"object\");\r",
+							"});\r",
 							""
 						],
 						"type": "text/javascript"
@@ -522,6 +526,18 @@
 		{
 			"key": "ID_RECEIPE",
 			"value": ""
+		},
+		{
+			"key": "AUTH_USER",
+			"value": "admin"
+		},
+		{
+			"key": "AUTH_MAIL",
+			"value": "admin@localhost"
+		},
+		{
+			"key": "AUTH_PASS",
+			"value": "admin"
 		}
 	]
 }
