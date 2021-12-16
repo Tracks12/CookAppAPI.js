@@ -13,7 +13,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 // Import Constants & Utils
-import { DB_URL, DB_NAME, EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET } from './common/constants.js';
+import { DB_URL, DB_NAME, EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET, TOKEN_DURATION } from './common/constants.js';
 import { checkToken } from "./common/utils.js";
 
 // MongoDB remote connection
@@ -42,20 +42,32 @@ receipes
 	})
 	.get("/:id", checkToken, async (req, res) => {
 		let data = await db.collection("receipes").findOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-		res.status(data ? 200 : 403).json(data ? data : {});
+
+		res
+			.status(data ? 200 : 403)
+			.json(data ? data : {});
 	})
 	.post("/", checkToken, async (req, res) => {
 		let request = await db.collection("receipes").insertOne({ ...req.body, userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-		res.status(request ? 200 : 500).json({ success: request ? true : false });
+
+		res
+			.status(request ? 200 : 500)
+			.json({ success: request ? true : false });
 	})
 	.put("/:id", checkToken, async (req, res) => {
 		let {_id, ...body} = req.body;
 		let request = await db.collection("receipes").updateOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }, { $set: body });
-		res.status(request.matchedCount > 0 ? 200 : 403).json({ success: request.matchedCount > 0 });
+
+		res
+			.status(request.matchedCount > 0 ? 200 : 403)
+			.json({ success: request.matchedCount > 0 });
 	})
 	.delete("/:id", checkToken, async (req, res) => {
 		let request = await db.collection("receipes").deleteOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-		res.status(request.deletedCount > 0 ? 200 : 403).json({ success: request.deletedCount > 0 });
+
+		res
+			.status(request.deletedCount > 0 ? 200 : 403)
+			.json({ success: request.deletedCount > 0 });
 	});
 
 app
@@ -66,25 +78,36 @@ app
 		console.log(`[${date.toLocaleDateString()} ${date.toLocaleTimeString()}][${req.ip}]: ${req.method} ${req.url}`);
 		next();
 	})
-	.get("/status", (req, res) => res.json({ success: db ? true : false }))
+	.get("/status", (req, res) => res.status(200).json({ success: db ? true : false }))
 	.use("/receipes", receipes)
 	.post("/login", async (req, res) => {
 		let user = await db.collection("users").findOne({ user: req.body.user });
-		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + 20 }, TOKEN_SECRET) : undefined;
+		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + TOKEN_DURATION }, TOKEN_SECRET) : undefined;
+
+		if(!user)
+			return res.status(404).json({ success: false, error: "user wasn't found" });
 
 		bcrypt.compare(req.body.pass, user.pass, (err, result) => {
-			res.set({ authorization: token }).status(user ? 200 : 404).json({ success: user && result });
+			res
+				.set({ authorization: token })
+				.status(user ? 200 : 500)
+				.json({ success: user && result });
 		});
 	})
 	.post("/register", async (req, res) => {
 		let user = await db.collection("users").findOne({ user: req.body.user });
+		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + TOKEN_DURATION }, TOKEN_SECRET) : undefined;
 
 		if(user)
-			return res.status(409).json({ success: false });
+			return res.status(409).json({ success: false, error: "user already exist" });
 
 		bcrypt.hash(req.body.pass, 10, async (err, hash) => {
 			let request = await db.collection("users").insertOne({ isAdmin: false, pass: hash, user: req.body.user });
-			res.status(request ? 200 : 500).json({ success: request ? true : false });
+
+			res
+				.set({ authorization: token })
+				.status(request ? 200 : 500)
+				.json({ success: request ? true : false });
 		});
 	});
 
