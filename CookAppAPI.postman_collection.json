@@ -60,7 +60,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"user\": \"{{AUTH_USER}}\",\r\n\t\"pass\": \"{{AUTH_PASS}}\"\r\n}",
+					"raw": "{\r\n\t\"user\": \"{{AUTH_USER}}\",\r\n\t\"email\": \"{{AUTH_MAIL}}\",\r\n\t\"pass\": \"{{AUTH_PASS}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -530,6 +530,10 @@
 		{
 			"key": "AUTH_USER",
 			"value": "admin"
+		},
+		{
+			"key": "AUTH_MAIL",
+			"value": "admin@localhost"
 		},
 		{
 			"key": "AUTH_PASS",
