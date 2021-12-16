@@ -8,67 +8,16 @@
 // Import Modules
 import express from "express";
 import cors from "cors";
-import { MongoClient, ObjectID } from "mongodb";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 // Import Constants & Utils
-import { DB_URL, DB_NAME, EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET, TOKEN_DURATION } from './common/constants.js';
-import { checkToken } from "./common/utils.js";
-
-// MongoDB remote connection
-let db;
-
-MongoClient.connect(DB_URL, (err, client) => {
-	console.log("[i] - MongoDB remote successfully connected !");
-	db = client.db(DB_NAME);
-});
+import { EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET, TOKEN_DURATION } from './common/constants.js';
+import { db } from "./common/database.js";
+import { receipes } from "./components/receipes.js";
 
 // App & Receipes instances
 const app = express();
-const receipes = express();
-
-receipes
-	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
-	.get("/all", checkToken, async (req, res) => {
-		if(jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin)
-			return res.status(200).json(await db.collection("receipes").find().toArray());
-
-		res.status(403);
-	})
-	.get("/", checkToken, async (req, res) => {
-		let data = await db.collection("receipes").find({ userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }).toArray();
-		res.status(200).json(data);
-	})
-	.get("/:id", checkToken, async (req, res) => {
-		let data = await db.collection("receipes").findOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-
-		res
-			.status(data ? 200 : 403)
-			.json(data ? data : {});
-	})
-	.post("/", checkToken, async (req, res) => {
-		let request = await db.collection("receipes").insertOne({ ...req.body, userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-
-		res
-			.status(request ? 200 : 500)
-			.json({ success: request ? true : false });
-	})
-	.put("/:id", checkToken, async (req, res) => {
-		let {_id, ...body} = req.body;
-		let request = await db.collection("receipes").updateOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }, { $set: body });
-
-		res
-			.status(request.matchedCount > 0 ? 200 : 403)
-			.json({ success: request.matchedCount > 0 });
-	})
-	.delete("/:id", checkToken, async (req, res) => {
-		let request = await db.collection("receipes").deleteOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
-
-		res
-			.status(request.deletedCount > 0 ? 200 : 403)
-			.json({ success: request.deletedCount > 0 });
-	});
 
 app
 	.use(cors())
@@ -95,14 +44,14 @@ app
 		});
 	})
 	.post("/register", async (req, res) => {
-		let user = await db.collection("users").findOne({ user: req.body.user });
+		let user = await db.collection("users").findOne({ user: req.body.user, email: req.body.email });
 		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + TOKEN_DURATION }, TOKEN_SECRET) : undefined;
 
 		if(user)
 			return res.status(409).json({ success: false, error: "user already exist" });
 
 		bcrypt.hash(req.body.pass, 10, async (err, hash) => {
-			let request = await db.collection("users").insertOne({ isAdmin: false, pass: hash, user: req.body.user });
+			let request = await db.collection("users").insertOne({ isAdmin: false, ...req.body, pass: hash });
 
 			res
 				.set({ authorization: token })
