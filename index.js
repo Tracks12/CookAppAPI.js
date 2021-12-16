@@ -29,7 +29,7 @@ const app = express();
 const receipes = express();
 
 receipes
-	.on("mount", () => console.log("[^] - Receipes CRUD correctly mounted !"))
+	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
 	.get("/all", checkToken, async (req, res) => {
 		if(jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin) {
 			let data = await db.collection("receipes").find().toArray();
@@ -64,15 +64,19 @@ app
 	.use(cors())
 	.use(express.json())
 	.use((req, res, next) => {
-		console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${req.ip}]: ${req.method} ${req.url}`);
+		let date = new Date();
+		console.log(`[${date.toLocaleDateString()} ${date.toLocaleTimeString()}][${req.ip}]: ${req.method} ${req.url}`);
 		next();
 	})
 	.get("/status", (req, res) => res.json({ success: db ? true : false }))
 	.use("/receipes", receipes)
 	.post("/login", async (req, res) => {
-		let user = await db.collection("users").findOne(req.body);
+		let user = await db.collection("users").findOne({ user: req.body.user });
 		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + 20 }, TOKEN_SECRET) : undefined;
-		res.set({ authorization: token }).status(user ? 200 : 401).json({ success: user ? true : false });
+
+		bcrypt.compare(req.body.pass, user.pass, (err, result) => {
+			res.set({ authorization: token }).status(user ? 200 : 401).json({ success: user && result });
+		});
 	})
 	.post("/register", async (req, res) => {
 		let user = await db.collection("users").findOne(req.body);
