@@ -31,10 +31,8 @@ const receipes = express();
 receipes
 	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
 	.get("/all", checkToken, async (req, res) => {
-		if(jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin) {
-			let data = await db.collection("receipes").find().toArray();
-			return res.status(200).json(data);
-		}
+		if(jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin)
+			return res.status(200).json(await db.collection("receipes").find().toArray());
 
 		res.status(403);
 	})
@@ -75,17 +73,19 @@ app
 		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + 20 }, TOKEN_SECRET) : undefined;
 
 		bcrypt.compare(req.body.pass, user.pass, (err, result) => {
-			res.set({ authorization: token }).status(user ? 200 : 401).json({ success: user && result });
+			res.set({ authorization: token }).status(user ? 200 : 404).json({ success: user && result });
 		});
 	})
 	.post("/register", async (req, res) => {
-		let user = await db.collection("users").findOne(req.body);
+		let user = await db.collection("users").findOne({ user: req.body.user });
 
 		if(user)
-			return res.status(200).json({ success: false });
+			return res.status(409).json({ success: false });
 
-		let request = await db.collection("users").insertOne({ isAdmin: false, ...req.body });
-		res.status(request ? 200 : 500).json({ success: request ? true : false });
+		await bcrypt.hash(req.body.pass, 10, (err, hash) => {
+			let request = db.collection("users").insertOne({ isAdmin: false, pass: hash, user: req.body.user });
+			res.status(request ? 200 : 500).json({ success: request ? true : false });
+		});
 	});
 
 app.listen(EXPRESS_PORT, EXPRESS_IP, () => console.log(`[i] - Server is listening on ${EXPRESS_IP ? EXPRESS_IP : "0.0.0.0"}:${EXPRESS_PORT}`));
