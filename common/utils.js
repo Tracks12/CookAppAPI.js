@@ -5,8 +5,10 @@
  * Autor   : CARDINAL Florian
  */
 
+// Import Modules
 import jwt from "jsonwebtoken";
 
+// Import Constants
 import { TOKEN_SECRET } from './constants.js';
 
 export const checkToken = (req, res, next) => {
@@ -16,6 +18,12 @@ export const checkToken = (req, res, next) => {
 
 		next();
 	});
+};
+
+export const requestLogger = (req, res, next) => {
+	let date = new Date();
+	console.log(`[${date.toLocaleDateString()} ${date.toLocaleTimeString()}][${req.ip}]: ${req.method} ${req.url}`);
+	next();
 };
 
 /**

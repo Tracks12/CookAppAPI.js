@@ -5,53 +5,57 @@
  * Autor   : CARDINAL Florian
  */
 
+// Import Modules
 import express from "express";
 import { ObjectID } from "mongodb";
 import jwt from "jsonwebtoken";
 
+// Import Constants & Utils
 import { TOKEN_SECRET } from '../common/constants.js';
-import { db } from "../common/database.js";
+import { Database } from "../common/database.js";
 import { checkToken } from "../common/utils.js";
 
-export const receipes = express();
+// Receipes instances
+const Receipes = express();
 
-receipes
+export default Receipes
 	.on("mount", () => console.log("[i] - Receipes CRUD correctly mounted !"))
 	.use(checkToken)
 	.get("/all", async (req, res) => {
-		if(jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin)
-			return res.status(200).json(await db.collection("receipes").find().toArray());
-
-		res.status(403);
+		return(
+			!jwt.verify(req.headers.authorization, TOKEN_SECRET).isAdmin
+			? res.status(403).json({ success: false, error: "You don't have administrator permissions" })
+			: res.status(200).json(await Database.collection("receipes").find().toArray())
+		);
 	})
 	.get("/", async (req, res) => {
-		let data = await db.collection("receipes").find({ userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }).toArray();
+		let data = await Database.collection("receipes").find({ userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }).toArray();
 		res.status(200).json(data);
 	})
 	.get("/:id", async (req, res) => {
-		let data = await db.collection("receipes").findOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
+		let data = await Database.collection("receipes").findOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
 
 		res
 			.status(data ? 200 : 403)
 			.json(data ? data : {});
 	})
 	.post("/", async (req, res) => {
-		let request = await db.collection("receipes").insertOne({ ...req.body, userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
+		let request = await Database.collection("receipes").insertOne({ ...req.body, userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
 
 		res
 			.status(request ? 200 : 500)
 			.json({ success: request ? true : false });
 	})
 	.put("/:id", async (req, res) => {
-		let {_id, ...body} = req.body;
-		let request = await db.collection("receipes").updateOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }, { $set: body });
+		let { _id, ...body } = req.body;
+		let request = await Database.collection("receipes").updateOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) }, { $set: body });
 
 		res
 			.status(request.matchedCount > 0 ? 200 : 403)
 			.json({ success: request.matchedCount > 0 });
 	})
 	.delete("/:id", async (req, res) => {
-		let request = await db.collection("receipes").deleteOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
+		let request = await Database.collection("receipes").deleteOne({ _id: new ObjectID(req.params.id), userid: new ObjectID(jwt.verify(req.headers.authorization, TOKEN_SECRET)._id) });
 
 		res
 			.status(request.deletedCount > 0 ? 200 : 403)

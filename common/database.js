@@ -5,15 +5,21 @@
  * Autor   : CARDINAL Florian
  */
 
+// Import Modules
 import { MongoClient } from "mongodb";
 
+// Import Constants
 import { DB_URL, DB_NAME } from './constants.js';
 
-export let db;
+export let Database;
 
 MongoClient.connect(DB_URL, (err, client) => {
-	console.log("[i] - MongoDB remote successfully connected !");
-	db = client.db(DB_NAME);
+	console.log(err ? "[!] - MongoDB remote not connected !" : "[i] - MongoDB remote successfully connected !");
+
+	if(err)
+		return;
+
+	Database = client.db(DB_NAME);
 });
 
 /**

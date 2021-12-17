@@ -13,24 +13,24 @@ import bcrypt from "bcrypt";
 
 // Import Constants & Utils
 import { EXPRESS_IP, EXPRESS_PORT, TOKEN_SECRET, TOKEN_DURATION } from './common/constants.js';
-import { db } from "./common/database.js";
-import { receipes } from "./components/receipes.js";
+import { Database } from "./common/database.js";
+import { requestLogger } from "./common/utils.js";
 
-// App & Receipes instances
-const app = express();
+// Import Components
+import Receipes from "./components/receipes.js";
 
-app
+// App instances
+const App = express();
+
+App
 	.use(cors())
 	.use(express.json())
-	.use((req, res, next) => {
-		let date = new Date();
-		console.log(`[${date.toLocaleDateString()} ${date.toLocaleTimeString()}][${req.ip}]: ${req.method} ${req.url}`);
-		next();
-	})
-	.get("/status", (req, res) => res.status(200).json({ success: db ? true : false }))
-	.use("/receipes", receipes)
+	.use(requestLogger)
+	.get("/status", (req, res) => res.status(Database ? 200 : 502).json({ success: Database ? true : false }))
+	.use("/receipes", Receipes)
 	.post("/login", async (req, res) => {
-		let user = await db.collection("users").findOne({ user: req.body.user });
+		let Collection = Database.collection("users");
+		let user = await Collection.findOne({ user: req.body.user });
 		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + TOKEN_DURATION }, TOKEN_SECRET) : undefined;
 
 		if(!user)
@@ -39,28 +39,31 @@ app
 		bcrypt.compare(req.body.pass, user.pass, (err, result) => {
 			res
 				.set({ authorization: token })
-				.status(user ? 200 : 500)
+				.status(user && result ? 200 : !result ? 401 : 502)
 				.json({ success: user && result });
 		});
 	})
 	.post("/register", async (req, res) => {
-		let user = await db.collection("users").findOne({ user: req.body.user, email: req.body.email });
-		let token = user ? jwt.sign({ _id: user._id, isAdmin: user.isAdmin, exp: Math.floor(Date.now() / 1000) + TOKEN_DURATION }, TOKEN_SECRET) : undefined;
+		let Collection = Database.collection("users");
+		let user = {
+			name: await Collection.findOne({ user: req.body.user }),
+			email: await Collection.findOne({ email: req.body.email })
+		};
 
-		if(user)
-			return res.status(409).json({ success: false, error: "user already exist" });
+		if(user.name || user.email)
+			return res.status(409).json({ success: false, error: user.name ? "user already exist" : "mail address already exist" });
 
 		bcrypt.hash(req.body.pass, 10, async (err, hash) => {
-			let request = await db.collection("users").insertOne({ isAdmin: false, ...req.body, pass: hash });
+			let { pass, ...body } = req.body;
+			let request = await Collection.insertOne({ isAdmin: false, ...body, pass: hash });
 
 			res
-				.set({ authorization: token })
-				.status(request ? 200 : 500)
+				.status(request ? 200 : 502)
 				.json({ success: request ? true : false });
 		});
 	});
 
-app.listen(EXPRESS_PORT, EXPRESS_IP, () => console.log(`[i] - Server is listening on ${EXPRESS_IP ? EXPRESS_IP : "0.0.0.0"}:${EXPRESS_PORT}`));
+App.listen(EXPRESS_PORT, EXPRESS_IP, () => console.log(`[i] - Server is listening on ${EXPRESS_IP ? EXPRESS_IP : "0.0.0.0"}:${EXPRESS_PORT}`));
 
 /**
  * END
